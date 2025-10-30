@@ -35,11 +35,14 @@ pet_datasets = [
     },
 ]
 
-# @pytest.mark.parametrize("pet_payload", pet_datasets)
-# def test_create_new_pet(pet_payload):
-#     # Create pet
-#     create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
-#     assert create_res.status_code in (200, 201)
+@pytest.mark.parametrize("pet_payload", pet_datasets)
+def test_create_new_pet(pet_payload):
+    # Create pet
+    create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
+    assert create_res.status_code in (200, 201)
+    # created = create_res.json()
+    # pet_id = created["id"]
+    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
 
 def test_update_pet_details(pet_payload):
     # First, create a pet to update
@@ -55,3 +58,73 @@ def test_update_pet_details(pet_payload):
 
     update_res = requests.put(f"{BASE_URL}/pet", json=updated_body)
     assert update_res.status_code in (200, 201)
+    updated = update_res.json()
+    assert updated["id"] == pet_id
+    assert updated["status"] == "sold"
+    assert updated["name"].endswith("_updated")
+
+    # Verify update
+    get_res = requests.get(f"{BASE_URL}/pet/{pet_id}")
+    assert get_res.status_code == 200
+    fetched = get_res.json()
+    assert fetched["status"] == "sold"
+    assert fetched["name"] == updated_body["name"]
+    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
+    # assert del_res.status_code in (200, 204)
+
+def test_find_pet_by_id(pet_payload):
+    # Step 1: Create a new pet
+    create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
+    assert create_res.status_code in (200, 201)
+    created = create_res.json()
+    pet_id = created["id"]
+
+    # Step 2: Find the pet by ID (only need petId in the URL)
+    get_res = requests.get(f"{BASE_URL}/pet/{pet_id}")
+    assert get_res.status_code == 200
+    fetched = get_res.json()
+
+    # Step 3: Verify details
+    assert fetched["id"] == pet_id
+    # assert fetched["name"] == pet_payload["name"]
+    # assert fetched["status"] == pet_payload["status"]
+    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
+    # assert del_res.status_code in (200, 204)
+
+def test_delete_pet(pet_payload):
+    # Step 1: Create a pet
+    create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
+    assert create_res.status_code in (200, 201)
+    created = create_res.json()
+    pet_id = created["id"]
+
+    # Step 2: Delete the pet
+    del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
+    assert del_res.status_code in (200, 204)
+
+    # Step 3: Verify deletion
+    get_res = requests.get(f"{BASE_URL}/pet/{pet_id}")
+    # Petstore sometimes returns 404, sometimes 200 with an ApiResponse
+    assert get_res.status_code in (404, 200)
+    if get_res.status_code == 200:
+        body = get_res.json()
+        # If it returns 200, it should be an ApiResponse, not a valid pet
+        assert "message" in body or "type" in body
+
+def test_find_pet_by_status(pet_payload):
+    # Step 1: Create a pet with status = "available"
+    pet_payload["status"] = "available"
+    create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
+    assert create_res.status_code in (200, 201)
+    created = create_res.json()
+    pet_id = created["id"]
+
+    # Step 2: Find pets by status
+    res = requests.get(f"{BASE_URL}/pet/findByStatus", params={"status": "available"})
+    assert res.status_code == 200
+    pets = res.json()
+    assert isinstance(pets, list)
+
+    # Step 3: Verify our created pet is in the results
+    found_ids = [p["id"] for p in pets if "id" in p]
+    assert pet_id in found_ids
