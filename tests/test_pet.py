@@ -11,23 +11,23 @@ from conftest import BASE_URL
 pet_datasets = [
     {
         "id": 0,
-        "category": {"id": 1, "name": "dogs"},
+        "category": {"id": 3, "name": "dogs"},
         "name": "bulldog",
         "photoUrls": ["https://example.com/dog1.jpg"],
         "tags": [{"id": 1, "name": "friendly"}],
         "status": "available",
     },
     {
-        "id": 0,
-        "category": {"id": 2, "name": "cats"},
+        "id": 1,
+        "category": {"id": 4, "name": "cats"},
         "name": "persian",
         "photoUrls": ["https://example.com/cat1.jpg"],
         "tags": [{"id": 2, "name": "fluffy"}],
         "status": "pending",
     },
     {
-        "id": 0,
-        "category": {"id": 3, "name": "birds"},
+        "id": 2,
+        "category": {"id": 5, "name": "birds"},
         "name": "parrot",
         "photoUrls": ["https://example.com/parrot.jpg"],
         "tags": [{"id": 3, "name": "talkative"}],
@@ -40,9 +40,6 @@ def test_create_new_pet(pet_payload):
     # Create pet
     create_res = requests.post(f"{BASE_URL}/pet", json=pet_payload)
     assert create_res.status_code in (200, 201)
-    # created = create_res.json()
-    # pet_id = created["id"]
-    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
 
 def test_update_pet_details(pet_payload):
     # First, create a pet to update
@@ -69,8 +66,6 @@ def test_update_pet_details(pet_payload):
     fetched = get_res.json()
     assert fetched["status"] == "sold"
     assert fetched["name"] == updated_body["name"]
-    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
-    # assert del_res.status_code in (200, 204)
 
 def test_find_pet_by_id(pet_payload):
     # Step 1: Create a new pet
@@ -86,10 +81,6 @@ def test_find_pet_by_id(pet_payload):
 
     # Step 3: Verify details
     assert fetched["id"] == pet_id
-    # assert fetched["name"] == pet_payload["name"]
-    # assert fetched["status"] == pet_payload["status"]
-    # del_res = requests.delete(f"{BASE_URL}/pet/{pet_id}")
-    # assert del_res.status_code in (200, 204)
 
 def test_delete_pet(pet_payload):
     # Step 1: Create a pet
